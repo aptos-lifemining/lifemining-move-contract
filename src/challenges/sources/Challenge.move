@@ -1,4 +1,4 @@
-module challenge_resource_account::ChallengeV2 {
+module challenge_resource_account::Challenge {
     use std::vector;
     use std::signer;
     use std::string::String;

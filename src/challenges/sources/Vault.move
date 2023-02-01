@@ -1,6 +1,6 @@
 // Implement stake / unstake functions here
 // TODO: additional sercurity works
-module vault_account::VaultWithSimpleMap {
+module vault_account::Vault {
     use std::error;
     use std::signer;
     use aptos_std::simple_map::{Self, SimpleMap};
