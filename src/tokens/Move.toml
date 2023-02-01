@@ -3,8 +3,8 @@ name = "LifeMining"
 version = "0.0.1"
 
 [dependencies]
-AptosFramework = { local = "../framework/aptos-framework" }
-AptosToken = { local = "../framework/aptos-token" }
+AptosFramework = { local = "../../framework/aptos-framework" }
+AptosToken = { local = "../../framework/aptos-token" }
 
 [addresses]
 aptos_framework = "0x1"

@@ -1,4 +1,4 @@
-module challenge_resource_account::Challenge {
+module challenge_admin_resource_account::Challenge {
     use std::vector;
     use std::signer;
     use std::string::String;
@@ -77,6 +77,10 @@ module challenge_resource_account::Challenge {
         move_to(resource_signer, LifeMiningChallenges{
             challenges: simple_map::create<ChallengeDataId, ChallengeData>(),
         });
+
+        // Initialize the Vault module
+
+        challenge_admin_resource_account::Vault::init_vault(resource_signer);
     }
 
     // Functions for the challenge hosts
@@ -117,7 +121,7 @@ module challenge_resource_account::Challenge {
             succeeded_participants: vector::empty<address>(),
         };
 
-        let challenges = &mut borrow_global_mut<LifeMiningChallenges>(@challenge_resource_account).challenges;
+        let challenges = &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges;
         simple_map::add(challenges, challenge_data_id, challenge_data);
 
         // mutate the host account state
@@ -143,7 +147,7 @@ module challenge_resource_account::Challenge {
     ) acquires LifeMiningChallenges {
 
         let challenge_data = simple_map::borrow_mut(
-            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_resource_account).challenges,
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &ChallengeDataId {
                 challenge_host: signer::address_of(host),
                 challenge_code_id: challenge_code_id,
@@ -163,7 +167,7 @@ module challenge_resource_account::Challenge {
     ) acquires LifeMiningChallenges {
 
         let challenge_data = simple_map::borrow_mut(
-            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_resource_account).challenges,
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &ChallengeDataId {
                 challenge_host: signer::address_of(host),
                 challenge_code_id: challenge_code_id,
@@ -200,7 +204,6 @@ module challenge_resource_account::Challenge {
     ) acquires LifeMiningChallenges, ChallengeStoreForParticipants {
 
         // mutate the resource account state
-        // TODO: transfer APT coin from the participant account to the challenge vault 
 
         let challenge_data_id = ChallengeDataId {
             challenge_host: host_address,
@@ -209,9 +212,12 @@ module challenge_resource_account::Challenge {
 
         // mutate ChallengeData.participants (add the participant address)
         let challenge_data = simple_map::borrow_mut(
-            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_resource_account).challenges,
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &challenge_data_id,
         );
+
+        // staking: transfer APT coin from the participant account to the challenge vault 
+        challenge_admin_resource_account::Vault::stake_to_vault(participant, challenge_data.deposit_amount);
 
         // assert if the challenge is active
         // FIXME: wrong conditions. 
