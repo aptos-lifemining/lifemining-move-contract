@@ -15,9 +15,9 @@ module challenge_admin_resource_account::Vault {
     const EINSUFFICIENT_STAKED_AMOUNT_IN_VAULT: u64 = 0;
 
     // TODO: Access control for the signer capability.
-    struct ModuleData has key {
-        signer_cap: SignerCapability,
-    }
+    // struct SignerStore has key {
+    //     signer_cap: SignerCapability,
+    // }
 
     struct VaultLedger has key {
         vault_ledger: SimpleMap<address, u64> // <LifeMining participant's address, staked amount>
@@ -26,7 +26,7 @@ module challenge_admin_resource_account::Vault {
     public(friend) fun init_vault(challenge_admin_resource_signer: &signer) {
         // let vault_signer_cap = resource_account::retrieve_resource_account_cap(vault_signer, @source_addr);
 
-        // move_to(challenge_admin_resource_signer, ModuleData{
+        // move_to(challenge_admin_resource_signer, SignerStore{
         //     signer_cap: vault_signer_cap,
         // });
 
@@ -52,7 +52,7 @@ module challenge_admin_resource_account::Vault {
         *staked_amount = *staked_amount + amount; // add staked amount to the ledger.
     }
 
-    public(friend) fun unstake_from_vault(user: &signer, amount: u64) acquires ModuleData, VaultLedger {
+    public(friend) fun unstake_from_vault(user: &signer, amount: u64) acquires SignerStore, VaultLedger {
 
         let ledger_table = borrow_global_mut<VaultLedger>(@challenge_admin_resource_account);
         
@@ -69,7 +69,7 @@ module challenge_admin_resource_account::Vault {
             error::aborted(EINSUFFICIENT_STAKED_AMOUNT_IN_VAULT)
         );
 
-        let module_data = borrow_global_mut<ModuleData>(@challenge_admin_resource_account);
+        let module_data = borrow_global_mut<SignerStore>(@challenge_admin_resource_account);
         let vault_signer = account::create_signer_with_capability(&module_data.signer_cap);
 
         let aptos_coin = coin::withdraw<AptosCoin>(&vault_signer, amount);

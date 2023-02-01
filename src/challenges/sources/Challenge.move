@@ -22,7 +22,7 @@ module challenge_admin_resource_account::Challenge {
 
     // structs for the resource account
 
-    struct ModuleData has key {
+    struct SignerStore has key {
         signer_cap: SignerCapability,
     }
 
@@ -70,7 +70,7 @@ module challenge_admin_resource_account::Challenge {
     fun init_module(resource_signer: &signer) {
         let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @source_addr);
 
-        move_to(resource_signer, ModuleData{
+        move_to(resource_signer, SignerStore{
             signer_cap: signer_cap,
         });
 
@@ -135,7 +135,7 @@ module challenge_admin_resource_account::Challenge {
         let challenges_for_hosts = &mut borrow_global_mut<ChallengeStoreForHosts>(signer::address_of(host)).challenges_for_hosts;
         vector::push_back(challenges_for_hosts, challenge_id);
 
-        // let module_data = borrow_global_mut<ModuleData>(@resourcre_account);
+        // let module_data = borrow_global_mut<SignerStore>(@resourcre_account);
         // let signer_cap = &mut module_data.signer_cap;
         // signer_cap.borrow_signer();
     }
@@ -154,7 +154,7 @@ module challenge_admin_resource_account::Challenge {
             },
         );
         challenge_data.is_active = true;
-        // let module_data = borrow_global_mut<ModuleData>(0x1);
+        // let module_data = borrow_global_mut<SignerStore>(0x1);
         // let signer_cap = &mut module_data.signer_cap;
         // signer_cap.borrow_signer();
     }
@@ -177,7 +177,7 @@ module challenge_admin_resource_account::Challenge {
 
         // TODO: transfer APT coin in the challenge vault to the succeeded participants        
 
-        // let module_data = borrow_global_mut<ModuleData>(0x1);
+        // let module_data = borrow_global_mut<SignerStore>(0x1);
         // let signer_cap = &mut module_data.signer_cap;
         // signer_cap.borrow_signer();
     }
@@ -243,7 +243,7 @@ module challenge_admin_resource_account::Challenge {
             }
         );
 
-        // let module_data = borrow_global_mut<ModuleData>(0x1);
+        // let module_data = borrow_global_mut<SignerStore>(0x1);
         // let signer_cap = &mut module_data.signer_cap;
         // signer_cap.borrow_signer();
     }
@@ -270,12 +270,12 @@ module challenge_admin_resource_account::Challenge {
         );
 
         simple_map::add(&mut challenge.checkpoints, day_index, true)
-        // let module_data = borrow_global_mut<ModuleData>(0x1);
+        // let module_data = borrow_global_mut<SignerStore>(0x1);
         // let signer_cap = &mut module_data.signer_cap;
         // signer_cap.borrow_signer();
     }
 
-    // public fun withdraw(challenge_code_id: String) acquires LifeMiningChallenges, ModuleData {
+    // public fun withdraw(challenge_code_id: String) acquires LifeMiningChallenges, SignerStore {
     //     let participant = Signer::address_of(signer);
     //     let host = Signer::address_of(signer);
     //     let challenge_data_id = ChallengeDataId {
@@ -300,7 +300,7 @@ module challenge_admin_resource_account::Challenge {
     //     if (success_count == challenge_data.challenge_period_in_days) {
     //         challenge_data.succeeded_participants.push_back(participant);
     //     }
-    //     // let module_data = borrow_global_mut<ModuleData>(0x1);
+    //     // let module_data = borrow_global_mut<SignerStore>(0x1);
     //     // let signer_cap = &mut module_data.signer_cap;
     //     // signer_cap.borrow_signer();
     // }
