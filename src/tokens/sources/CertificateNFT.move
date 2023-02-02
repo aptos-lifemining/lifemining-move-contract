@@ -22,7 +22,7 @@ module deployer::CertificateNFT {
 
     // Create collection during deployment
     fun init_module(resource_signer: &signer) {
-        let collection_name = string::utf8(b"LMCertificate::User#0001");
+        let collection_name = string::utf8(b"LMCertificateCollection");
         let description = string::utf8(b"LifeMining Certificate Token Collection for User#0001");
         let collection_uri = string::utf8(b"https://lifemining.app");
 
@@ -60,7 +60,7 @@ module deployer::CertificateNFT {
             // In this example, we are using it to record the receiver's address.
             // We will mutate this field to record the user's address
             // when a user successfully mints a token in the `mint_event_ticket()` function.
-            vector<String>[string::utf8(b"given_to")], // property_keys
+            vector<String>[string::utf8(b"")], // property_keys
             vector<vector<u8>>[b""], // property_values
             vector<String>[string::utf8(b"address")], // property_types
         );
@@ -84,8 +84,8 @@ module deployer::CertificateNFT {
         // let module_signer_data = borrow_global_mut<ModuleSignerData>(account::get_resource_account_address());
         let resource_signer = account::create_signer_with_capability(&module_signer_data.signer_cap);
 
-        let collectionName = string::utf8(b"LMCertificate::User#0001");
-        let tokenName = string::utf8(b"User#0001::Certificate#0001");
+        let collectionName = string::utf8(b"LMCertificateCollection");
+        let tokenName = string::utf8(b"AptosSeoulHackathon::User#0001");
         mint_certificate_token(&resource_signer, user, collectionName, tokenName, uri); // resource_signer, user, collection_name, token_name, token_uri
         
     }

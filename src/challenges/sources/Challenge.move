@@ -14,7 +14,7 @@ module challenge_admin_resource_account::Challenge {
     ** <host>
     ** - create_challenge
     ** - start_challenge
-    ** - finish_challenge_and_distribute_rewards
+    ** - finish_challenge
     ** <participant>
     ** - join_challenge
     ** - submit_daily_checkpoint
@@ -53,6 +53,7 @@ module challenge_admin_resource_account::Challenge {
         end_time: u64,
         participants: vector<address>,
         succeeded_participants: vector<address>,
+        final_reward_for_successful_participants: u64,
     }
 
     // structs for user accounts
@@ -70,6 +71,7 @@ module challenge_admin_resource_account::Challenge {
         challenge_id: ChallengeId,
         daily_checkpoints: SimpleMap<u64, bool>, // <day_index, successful>
         success_counter: u64,
+        done_claim_for_reward: bool,
     }
 
     struct ChallengeStoreForHosts has key {
@@ -80,11 +82,11 @@ module challenge_admin_resource_account::Challenge {
     // Initialize the Resource Account
 
     fun init_module(resource_signer: &signer) {
-        let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @source_addr);
+        // let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @source_addr);
 
-        move_to(resource_signer, SignerStore{
-            signer_cap: signer_cap,
-        });
+        // move_to(resource_signer, SignerStore{
+        //     signer_cap: signer_cap,
+        // });
 
         move_to(resource_signer, LifeMiningChallenges{
             challenges: simple_map::create<ChallengeDataId, ChallengeData>(),
@@ -122,7 +124,9 @@ module challenge_admin_resource_account::Challenge {
         host: &signer,
         challenge_code_id: String,
         deposit_amount: u64,
+        final_reward_for_successful_participants: u64,
         challenge_period_in_days: u64,
+        success_threshold_in_days: u64,
         start_time: u64,
         end_time: u64,
     ) acquires LifeMiningChallenges, ChallengeStoreForHosts {
@@ -138,10 +142,12 @@ module challenge_admin_resource_account::Challenge {
             challenge_status: CHALLENGE_CREATED, // 0
             deposit_amount: deposit_amount,
             challenge_period_in_days: challenge_period_in_days,
+            success_threshold_in_days: success_threshold_in_days,
             start_time: start_time,
             end_time: end_time,
             participants: vector::empty<address>(),
             succeeded_participants: vector::empty<address>(),
+            final_reward_for_successful_participants: final_reward_for_successful_participants, // initialize to 0
         };
 
         let challenges = &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges;
@@ -179,7 +185,7 @@ module challenge_admin_resource_account::Challenge {
 
     // mutate: ChallengeData.is_active = false
     // transfer APT coin in the challenge vault to the succeeded participants
-    public entry fun finish_challenge_and_distribute_rewards(
+    public entry fun finish_challenge(
         host: &signer,
         challenge_code_id: String
     ) acquires LifeMiningChallenges {
@@ -198,13 +204,13 @@ module challenge_admin_resource_account::Challenge {
         // total deposit amount
         let total_deposit = challenge_data.deposit_amount * vector::length(participants);
         let reward_amount = total_deposit / vector::length(succeeded_participants);
+        challenge_data.final_reward_for_successful_participants = reward_amount;
 
-        let i = 0;
-
-        while (i < vector::length(succeeded_participants)) {
-            challenge_admin_resource_account::Vault::unstake_from_vault(*vector::borrow(succeeded_participants, i), reward_amount);
-            i = i + 1;
-        };
+        // let i = 0;
+        // while (i < vector::length(succeeded_participants)) {
+        //     challenge_admin_resource_account::Vault::unstake_from_vault(*vector::borrow(succeeded_participants, i), reward_amount);
+        //     i = i + 1;
+        // };
 
         assert!(timestamp::now_seconds() >= challenge_data.end_time, error::aborted(EINVALID_TIMESTAMP));
         challenge_data.challenge_status = CHALLENGE_FINISHED; // 2
@@ -270,6 +276,7 @@ module challenge_admin_resource_account::Challenge {
                 challenge_id: challenge_id,
                 daily_checkpoints: simple_map::create<u64, bool>(),
                 success_counter: 0,
+                done_claim_for_reward: false,
             }
         );
     }
@@ -286,9 +293,8 @@ module challenge_admin_resource_account::Challenge {
             challenge_code_id: challenge_code_id,
         };
 
-        // immutable reference to the challenge data
-        let challenge_data = simple_map::borrow(
-            &borrow_global<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
+        let challenge_data = simple_map::borrow_mut(
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &challenge_data_id,
         );
 
@@ -311,6 +317,41 @@ module challenge_admin_resource_account::Challenge {
 
         if (challenge.success_counter == challenge_data.success_threshold_in_days) { // added to the succeeded participants when the counter reaches the threshold (executed once)
             vector::push_back(&mut challenge_data.succeeded_participants, signer::address_of(participant));
+        }
+    }
+
+    public entry fun claim_for_challenge_reward(
+        participant: &signer,
+        host_address: address,
+        challenge_code_id: String,
+    ) acquires LifeMiningChallenges, ChallengeStoreForParticipants {
+
+        let challenge_data_id = ChallengeDataId {
+            challenge_host: host_address,
+            challenge_code_id: challenge_code_id,
+        };
+
+        let challenge_data = simple_map::borrow_mut(
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
+            &challenge_data_id,
+        );
+
+        assert!(challenge_data.challenge_status == CHALLENGE_FINISHED, EINVALID_CHALLENGE_STATUS); // could be claimed only when the challenge is finished
+
+        let challenge_id = ChallengeId {
+            challenge_data_id: challenge_data_id,
+        };
+
+        let challenge = simple_map::borrow_mut(
+            &mut borrow_global_mut<ChallengeStoreForParticipants>(signer::address_of(participant)).challenges_for_participants,
+            &challenge_id,
+        );
+
+        // if the participant is in the succeeded participants, distribute the reward
+        let succeeded_participants = &challenge_data.succeeded_participants;
+        if (vector::contains(succeeded_participants, &signer::address_of(participant))) {
+            challenge_admin_resource_account::Vault::unstake_from_vault(signer::address_of(participant), challenge_data.final_reward_for_successful_participants);
+            challenge.done_claim_for_reward = true;
         }
     }
 }
