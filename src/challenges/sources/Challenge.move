@@ -82,11 +82,11 @@ module challenge_admin_resource_account::Challenge {
     // Initialize the Resource Account
 
     fun init_module(resource_signer: &signer) {
-        let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @source_addr);
+        // let signer_cap = resource_account::retrieve_resource_account_cap(resource_signer, @source_addr);
 
-        move_to(resource_signer, SignerStore{
-            signer_cap: signer_cap,
-        });
+        // move_to(resource_signer, SignerStore{
+        //     signer_cap: signer_cap,
+        // });
 
         move_to(resource_signer, LifeMiningChallenges{
             challenges: simple_map::create<ChallengeDataId, ChallengeData>(),
@@ -178,7 +178,7 @@ module challenge_admin_resource_account::Challenge {
             },
         );
 
-        assert!(check_timestamp(challenge_data.start_time, challenge_data.end_time), error::aborted(EINVALID_TIMESTAMP));
+        // assert!(check_timestamp(challenge_data.start_time, challenge_data.end_time), error::aborted(EINVALID_TIMESTAMP));
 
         challenge_data.challenge_status = CHALLENGE_STARTED; // 1
     }
@@ -212,7 +212,7 @@ module challenge_admin_resource_account::Challenge {
         //     i = i + 1;
         // };
 
-        assert!(timestamp::now_seconds() >= challenge_data.end_time, error::aborted(EINVALID_TIMESTAMP));
+        // assert!(timestamp::now_seconds() >= challenge_data.end_time, error::aborted(EINVALID_TIMESTAMP));
         challenge_data.challenge_status = CHALLENGE_FINISHED; // 2
     }
 
@@ -255,7 +255,7 @@ module challenge_admin_resource_account::Challenge {
 
         // assert if the challenge is created or started
         let status = challenge_data.challenge_status;
-        assert!((status == CHALLENGE_CREATED || status == CHALLENGE_STARTED), EINVALID_CHALLENGE_STATUS);
+        // assert!((status == CHALLENGE_CREATED || status == CHALLENGE_STARTED), EINVALID_CHALLENGE_STATUS);
 
         vector::push_back(&mut challenge_data.participants, signer::address_of(participant));
 
@@ -300,7 +300,7 @@ module challenge_admin_resource_account::Challenge {
 
         // assert if the challenge is started
         let status = challenge_data.challenge_status;
-        assert!(status == CHALLENGE_STARTED, EINVALID_CHALLENGE_STATUS);
+        // assert!(status == CHALLENGE_STARTED, EINVALID_CHALLENGE_STATUS);
 
 
         let challenge_id = ChallengeId {
@@ -336,7 +336,7 @@ module challenge_admin_resource_account::Challenge {
             &challenge_data_id,
         );
 
-        assert!(challenge_data.challenge_status == CHALLENGE_FINISHED, EINVALID_CHALLENGE_STATUS); // could be claimed only when the challenge is finished
+        // assert!(challenge_data.challenge_status == CHALLENGE_FINISHED, EINVALID_CHALLENGE_STATUS); // could be claimed only when the challenge is finished
 
         let challenge_id = ChallengeId {
             challenge_data_id: challenge_data_id,

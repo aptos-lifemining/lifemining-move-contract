@@ -9,6 +9,7 @@ module challenge_admin_resource_account::Vault {
     use aptos_std::simple_map::{Self, SimpleMap};
     use aptos_framework::account;
     use aptos_framework::account::SignerCapability;
+    use aptos_framework::resource_account;
     use aptos_framework::coin;
     use aptos_framework::aptos_coin::{AptosCoin};
 
@@ -25,11 +26,11 @@ module challenge_admin_resource_account::Vault {
     }
 
     public(friend) fun init_vault(challenge_admin_resource_signer: &signer) {
-        // let vault_signer_cap = resource_account::retrieve_resource_account_cap(vault_signer, @source_addr);
+        let vault_signer_cap = resource_account::retrieve_resource_account_cap(challenge_admin_resource_signer, @source_addr);
 
-        // move_to(challenge_admin_resource_signer, SignerStore{
-        //     signer_cap: vault_signer_cap,
-        // });
+        move_to(challenge_admin_resource_signer, SignerStore{
+            signer_cap: vault_signer_cap,
+        });
 
         move_to(challenge_admin_resource_signer, VaultLedger {
             vault_ledger: simple_map::create(),
@@ -79,6 +80,4 @@ module challenge_admin_resource_account::Vault {
 
         *staked_amount = *staked_amount - amount; // discount staked amount of the user from the vault ledger.
     }
-
-    
 }

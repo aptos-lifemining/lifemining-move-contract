@@ -8,4 +8,3 @@ AptosToken = { local = "../../framework/aptos-token" }
 
 [addresses]
 aptos_framework = "0x1"
-challenge_admin_resource_account = "_"
