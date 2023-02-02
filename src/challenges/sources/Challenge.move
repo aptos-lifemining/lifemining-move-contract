@@ -18,7 +18,6 @@ module challenge_admin_resource_account::Challenge {
     ** <participant>
     ** - join_challenge
     ** - submit_daily_checkpoint
-    ** - complete_challenge_submission
     */
 
     // Error codes
@@ -49,6 +48,7 @@ module challenge_admin_resource_account::Challenge {
         challenge_status: u64, // enum { 0, 1, 2, 3 }
         deposit_amount: u64, // amount in APT coin
         challenge_period_in_days: u64,
+        success_threshold_in_days: u64,
         start_time: u64,
         end_time: u64,
         participants: vector<address>,
@@ -308,37 +308,8 @@ module challenge_admin_resource_account::Challenge {
 
         simple_map::add(&mut challenge.daily_checkpoints, day_index, true);
         challenge.success_counter = challenge.success_counter + 1; // increment the counter
-    }
 
-    // check if the participant has completed the challenge by checking the checkpoints counter.
-    public entry fun complete_challenge_submission(
-        participant: &signer,
-        host_address: address,
-        challenge_code_id: String
-    ) acquires LifeMiningChallenges, ChallengeStoreForParticipants {
-
-        let challenge_data_id = ChallengeDataId {
-            challenge_host: host_address,
-            challenge_code_id: challenge_code_id,
-        };
-
-        let challenge_data = simple_map::borrow_mut(
-            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
-            &challenge_data_id,
-        );
-
-        let challenge_id = ChallengeId {
-            challenge_data_id: challenge_data_id,
-        };
-
-        let challenge = simple_map::borrow_mut(
-            &mut borrow_global_mut<ChallengeStoreForParticipants>(signer::address_of(participant)).challenges_for_participants,
-            &challenge_id,
-        );
-
-        // verify if the participant has completed the challenge
-        // TODO: control the successful rate
-        if (challenge.success_counter == challenge_data.challenge_period_in_days) {
+        if (challenge.success_counter == challenge_data.success_threshold_in_days) { // added to the succeeded participants when the counter reaches the threshold (executed once)
             vector::push_back(&mut challenge_data.succeeded_participants, signer::address_of(participant));
         }
     }
