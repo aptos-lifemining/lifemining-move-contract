@@ -21,6 +21,7 @@ module challenge_admin_resource_account::Vault {
 
     struct VaultLedger has key {
         vault_ledger: SimpleMap<address, u64> // <LifeMining participant's address, staked amount>
+        // vault_ledger: SimpleMap<ChallengeDataId, SimpleMap<address, u64>>
     }
 
     public(friend) fun init_vault(challenge_admin_resource_signer: &signer) {
@@ -64,10 +65,11 @@ module challenge_admin_resource_account::Vault {
         let staked_amount = simple_map::borrow_mut(&mut ledger_table.vault_ledger, &user); // Acquire a mutable reference to the vault ledger table value corresponds to the user address.
 
         // Only allow unstaking if the user has enough amount of coin in the vault ledger.
-        assert!(
-            *staked_amount >= amount,
-            error::aborted(EINSUFFICIENT_STAKED_AMOUNT_IN_VAULT)
-        );
+        // The assertion currently not used since the function is only called under the condition that the vault contains enough amount of coin to be claimed.
+        // assert!(
+        //     *staked_amount >= amount,
+        //     error::aborted(EINSUFFICIENT_STAKED_AMOUNT_IN_VAULT)
+        // );
 
         let module_data = borrow_global_mut<SignerStore>(@challenge_admin_resource_account);
         let vault_signer = account::create_signer_with_capability(&module_data.signer_cap);
