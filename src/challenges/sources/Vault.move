@@ -2,7 +2,7 @@
 // TODO: additional sercurity works
 module challenge_admin_resource_account::Vault {
 
-    friend challenge_admin_resource_account::Challenge; // Challegne module can access the vault account.
+    friend challenge_admin_resource_account::Challenge; // Challenge module can access the vault account.
 
     use std::error;
     use std::signer;
@@ -15,9 +15,9 @@ module challenge_admin_resource_account::Vault {
     const EINSUFFICIENT_STAKED_AMOUNT_IN_VAULT: u64 = 0;
 
     // TODO: Access control for the signer capability.
-    // struct SignerStore has key {
-    //     signer_cap: SignerCapability,
-    // }
+    struct SignerStore has key {
+        signer_cap: SignerCapability,
+    }
 
     struct VaultLedger has key {
         vault_ledger: SimpleMap<address, u64> // <LifeMining participant's address, staked amount>
@@ -52,16 +52,16 @@ module challenge_admin_resource_account::Vault {
         *staked_amount = *staked_amount + amount; // add staked amount to the ledger.
     }
 
-    public(friend) fun unstake_from_vault(user: &signer, amount: u64) acquires SignerStore, VaultLedger {
+    public(friend) fun unstake_from_vault(user: address, amount: u64) acquires SignerStore, VaultLedger {
 
         let ledger_table = borrow_global_mut<VaultLedger>(@challenge_admin_resource_account);
         
         // create a new entry in the vault ledger table if the user is not in the table.
-        if (!simple_map::contains_key(&ledger_table.vault_ledger, &signer::address_of(user))) {
-            simple_map::add(&mut ledger_table.vault_ledger, signer::address_of(user), 0);
+        if (!simple_map::contains_key(&ledger_table.vault_ledger, &user)) {
+            simple_map::add(&mut ledger_table.vault_ledger, user, 0);
         };
 
-        let staked_amount = simple_map::borrow_mut(&mut ledger_table.vault_ledger, &signer::address_of(user)); // Acquire a mutable reference to the vault ledger table value corresponds to the user address.
+        let staked_amount = simple_map::borrow_mut(&mut ledger_table.vault_ledger, &user); // Acquire a mutable reference to the vault ledger table value corresponds to the user address.
 
         // Only allow unstaking if the user has enough amount of coin in the vault ledger.
         assert!(
@@ -73,7 +73,7 @@ module challenge_admin_resource_account::Vault {
         let vault_signer = account::create_signer_with_capability(&module_data.signer_cap);
 
         let aptos_coin = coin::withdraw<AptosCoin>(&vault_signer, amount);
-        coin::deposit(signer::address_of(user), aptos_coin);
+        coin::deposit(user, aptos_coin);
 
         *staked_amount = *staked_amount - amount; // discount staked amount of the user from the vault ledger.
     }
