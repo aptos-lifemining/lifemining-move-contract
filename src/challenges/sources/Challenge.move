@@ -125,6 +125,7 @@ module challenge_admin_resource_account::Challenge {
         challenge_code_id: String,
         deposit_amount: u64,
         challenge_period_in_days: u64,
+        success_threshold_in_days: u64,
         start_time: u64,
         end_time: u64,
     ) acquires LifeMiningChallenges, ChallengeStoreForHosts {
@@ -140,10 +141,12 @@ module challenge_admin_resource_account::Challenge {
             challenge_status: CHALLENGE_CREATED, // 0
             deposit_amount: deposit_amount,
             challenge_period_in_days: challenge_period_in_days,
+            success_threshold_in_days: success_threshold_in_days,
             start_time: start_time,
             end_time: end_time,
             participants: vector::empty<address>(),
             succeeded_participants: vector::empty<address>(),
+            final_reward_for_successful_participants: 0, // initialize to 0
         };
 
         let challenges = &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges;
@@ -272,6 +275,7 @@ module challenge_admin_resource_account::Challenge {
                 challenge_id: challenge_id,
                 daily_checkpoints: simple_map::create<u64, bool>(),
                 success_counter: 0,
+                done_claim_for_reward: false,
             }
         );
     }
@@ -288,9 +292,8 @@ module challenge_admin_resource_account::Challenge {
             challenge_code_id: challenge_code_id,
         };
 
-        // immutable reference to the challenge data
-        let challenge_data = simple_map::borrow(
-            &borrow_global<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
+        let challenge_data = simple_map::borrow_mut(
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &challenge_data_id,
         );
 
@@ -320,16 +323,15 @@ module challenge_admin_resource_account::Challenge {
         participant: &signer,
         host_address: address,
         challenge_code_id: String,
-    ) acquires LifeMiningChallenges {
+    ) acquires LifeMiningChallenges, ChallengeStoreForParticipants {
 
         let challenge_data_id = ChallengeDataId {
             challenge_host: host_address,
             challenge_code_id: challenge_code_id,
         };
 
-        // immutable reference to the challenge data
-        let challenge_data = simple_map::borrow(
-            &borrow_global<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
+        let challenge_data = simple_map::borrow_mut(
+            &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges,
             &challenge_data_id,
         );
 
@@ -347,7 +349,7 @@ module challenge_admin_resource_account::Challenge {
         // if the participant is in the succeeded participants, distribute the reward
         let succeeded_participants = &challenge_data.succeeded_participants;
         if (vector::contains(succeeded_participants, &signer::address_of(participant))) {
-            challenge_admin_resource_account::Vault::unstake_from_vault(participant, challenge_data.final_reward_for_successful_participants);
+            challenge_admin_resource_account::Vault::unstake_from_vault(signer::address_of(participant), challenge_data.final_reward_for_successful_participants);
             challenge.done_claim_for_reward = true;
         }
     }
