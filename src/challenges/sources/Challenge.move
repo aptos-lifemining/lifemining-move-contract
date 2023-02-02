@@ -21,6 +21,7 @@ module challenge_admin_resource_account::Challenge {
     ** - complete_challenge_submission
     */
 
+    // Error codes
     const EINVALID_TIMESTAMP: u64 = 0;
     const EINVALID_CHALLENGE_STATUS: u64 = 1;
 
@@ -28,7 +29,6 @@ module challenge_admin_resource_account::Challenge {
     const CHALLENGE_CREATED: u64 = 0;
     const CHALLENGE_STARTED: u64 = 1;
     const CHALLENGE_FINISHED: u64 = 2;
-    const CHALLENGE_WITHDRAWN: u64 = 3;
 
     // structs for the resource account
 
