@@ -124,6 +124,7 @@ module challenge_admin_resource_account::Challenge {
         host: &signer,
         challenge_code_id: String,
         deposit_amount: u64,
+        final_reward_for_successful_participants: u64,
         challenge_period_in_days: u64,
         success_threshold_in_days: u64,
         start_time: u64,
@@ -146,7 +147,7 @@ module challenge_admin_resource_account::Challenge {
             end_time: end_time,
             participants: vector::empty<address>(),
             succeeded_participants: vector::empty<address>(),
-            final_reward_for_successful_participants: 0, // initialize to 0
+            final_reward_for_successful_participants: final_reward_for_successful_participants, // initialize to 0
         };
 
         let challenges = &mut borrow_global_mut<LifeMiningChallenges>(@challenge_admin_resource_account).challenges;
