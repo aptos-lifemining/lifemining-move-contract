@@ -1,5 +1,3 @@
-// Implement stake / unstake functions here
-// TODO: additional sercurity works
 module challenge_admin_resource_account::Vault {
 
     friend challenge_admin_resource_account::Challenge; // Challenge module can access the vault account.

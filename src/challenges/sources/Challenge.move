@@ -10,14 +10,17 @@ module challenge_admin_resource_account::Challenge {
     use aptos_framework::account::SignerCapability;
 
     /*
-    ** functions
+    ** entry functions
+    **
     ** <host>
     ** - create_challenge
     ** - start_challenge
     ** - finish_challenge
+    **
     ** <participant>
     ** - join_challenge
     ** - submit_daily_checkpoint
+    ** - claim_for_challenge_reward
     */
 
     // Error codes
